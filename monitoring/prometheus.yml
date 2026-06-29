@@ -1,0 +1,104 @@
+# -----------------------------------------------------------------
+# Harrington Capital plc -- Prometheus Configuration
+# Phase 5: Monitoring and Observability
+# -----------------------------------------------------------------
+# BUILD  : Place this file at /etc/prometheus/prometheus.yml on HC-MON01.
+#          Run: sudo systemctl restart prometheus
+# VERIFY : Open http://HC-MON01-IP:9090/targets
+#          All targets must show State: UP
+# SUBMIT : Screenshot of /targets page showing all hosts UP.
+# -----------------------------------------------------------------
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  scrape_timeout:      10s
+
+  external_labels:
+    environment: 'production'
+    company:     'harrington-capital'
+    region:      'uk-south'
+
+# Alerting configuration (extend in Phase 6)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # Add alertmanager target when configured:
+          # - targets: ['localhost:9093']
+
+# Rule files (add alert rules in Phase 6)
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+# -----------------------------------------------------------------
+# SCRAPE CONFIGS
+# -----------------------------------------------------------------
+
+scrape_configs:
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          host: 'HC-MON01'
+          role: 'monitoring'
+
+  # Windows Domain Controller (HC-DC01)
+  # Requires: Windows Exporter installed on HC-DC01
+  # Install: https://github.com/prometheus-community/windows_exporter
+  - job_name: 'windows-dc01'
+    static_configs:
+      - targets: ['HC-DC01:9182']
+        labels:
+          host: 'HC-DC01'
+          role: 'domain-controller'
+          os:   'windows'
+    metrics_path: '/metrics'
+
+  # Linux App Server (HC-APP01)
+  # Requires: node_exporter running on HC-APP01 (port 9100)
+  - job_name: 'linux-app01'
+    static_configs:
+      - targets: ['HC-APP01:9100']
+        labels:
+          host: 'HC-APP01'
+          role: 'application'
+          os:   'linux'
+
+  # Linux Monitoring Server self (HC-MON01)
+  - job_name: 'linux-mon01'
+    static_configs:
+      - targets: ['localhost:9100']
+        labels:
+          host: 'HC-MON01'
+          role: 'monitoring'
+          os:   'linux'
+
+  # Docker containers (cAdvisor)
+  # Requires: cAdvisor running on Docker host
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['HC-APP01:8080']
+        labels:
+          host: 'HC-APP01'
+          role: 'container-metrics'
+
+  # Azure VMs (via Azure Monitor exporter or node_exporter on each VM)
+  # Update IPs after terraform apply in Phase 1
+  - job_name: 'azure-vm-app01'
+    static_configs:
+      - targets: ['REPLACE_WITH_APP01_PUBLIC_IP:9100']
+        labels:
+          host: 'vm-harrington-prod-app01'
+          role: 'azure-app'
+          os:   'linux'
+
+  - job_name: 'azure-vm-mon01'
+    static_configs:
+      - targets: ['REPLACE_WITH_MON01_PUBLIC_IP:9100']
+        labels:
+          host: 'vm-harrington-prod-mon01'
+          role: 'azure-monitoring'
+          os:   'linux'
