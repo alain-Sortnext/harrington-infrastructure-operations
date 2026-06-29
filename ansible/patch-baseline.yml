@@ -1,0 +1,72 @@
+---
+# -----------------------------------------------------------------
+# Harrington Capital plc -- Patch Baseline Playbook
+# Phase 7: Automation Suite
+# -----------------------------------------------------------------
+# BUILD  : Run against all Linux servers to apply security patches.
+# VERIFY : PLAY RECAP shows changed/ok/failed counts per host.
+# SUBMIT : Paste PLAY RECAP and package update list into Phase 7 submission.
+# -----------------------------------------------------------------
+
+- name: "Harrington Capital -- Linux Patch Baseline"
+  hosts: linux_servers
+  become: true
+  serial: 1      # patch one server at a time to reduce blast radius
+
+  tasks:
+
+    - name: "Record pre-patch timestamp"
+      command: date +"%Y-%m-%d %H:%M:%S"
+      register: patch_start
+      changed_when: false
+
+    - name: "Update apt cache"
+      apt:
+        update_cache: true
+
+    - name: "List available security updates"
+      command: apt list --upgradable 2>/dev/null
+      register: upgradable
+      changed_when: false
+
+    - name: "Show available updates"
+      debug:
+        msg: "{{ upgradable.stdout_lines }}"
+
+    - name: "Apply security updates only"
+      apt:
+        upgrade: dist
+        autoremove: true
+      register: apt_result
+
+    - name: "Show upgrade result summary"
+      debug:
+        msg: "Packages upgraded: {{ apt_result.stdout | default('none') }}"
+
+    - name: "Check if reboot is required"
+      stat:
+        path: /var/run/reboot-required
+      register: reboot_required
+
+    - name: "Print reboot requirement"
+      debug:
+        msg: "REBOOT REQUIRED: {{ reboot_required.stat.exists }}"
+
+    - name: "Record post-patch timestamp"
+      command: date +"%Y-%m-%d %H:%M:%S"
+      register: patch_end
+      changed_when: false
+
+    - name: "Write patch record to log"
+      lineinfile:
+        path: /var/log/hc-patch-log.txt
+        line: "{{ patch_start.stdout }} to {{ patch_end.stdout }} | Host: {{ inventory_hostname }} | Reboot required: {{ reboot_required.stat.exists }}"
+        create: true
+
+    - name: "Print patch summary"
+      debug:
+        msg:
+          - "Host          : {{ inventory_hostname }}"
+          - "Patch started : {{ patch_start.stdout }}"
+          - "Patch ended   : {{ patch_end.stdout }}"
+          - "Reboot needed : {{ reboot_required.stat.exists }}"
