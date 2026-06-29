@@ -1,0 +1,206 @@
+---
+# -----------------------------------------------------------------
+# Harrington Capital plc -- Linux Security Hardening Playbook
+# Phase 3: Ubuntu Server Hardening
+# -----------------------------------------------------------------
+# BUILD  : Run this playbook against HC-APP01 and HC-MON01.
+# VERIFY : Check task output for 'changed' and 'ok' counts.
+#          Confirm SSH password auth disabled, ufw active, fail2ban running.
+# SUBMIT : Paste the PLAY RECAP output into your Phase 3 submission.
+#          Take a screenshot of 'sudo ufw status' and 'sudo systemctl status fail2ban'.
+# -----------------------------------------------------------------
+
+- name: "Harrington Capital -- Linux Security Hardening Baseline"
+  hosts: linux_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    ssh_port: 22
+    ssh_permit_root_login: "no"
+    ssh_password_authentication: "no"
+    ssh_max_auth_tries: 3
+    ssh_login_grace_time: 30
+    ntp_servers:
+      - "0.uk.pool.ntp.org"
+      - "1.uk.pool.ntp.org"
+    allowed_tcp_ports:
+      - 22
+      - 443
+      - 9090    # Prometheus (monitoring host only)
+      - 3000    # Grafana (monitoring host only)
+
+  tasks:
+
+    # ── SYSTEM UPDATE ────────────────────────────────────────────
+    - name: "Update apt cache"
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: "Upgrade all packages to latest"
+      apt:
+        upgrade: dist
+        autoremove: true
+
+    # ── REQUIRED PACKAGES ────────────────────────────────────────
+    - name: "Install required security packages"
+      apt:
+        name:
+          - fail2ban
+          - ufw
+          - unattended-upgrades
+          - ntp
+          - curl
+          - wget
+          - vim
+          - htop
+          - net-tools
+          - dnsutils
+        state: present
+
+    # ── SSH HARDENING ─────────────────────────────────────────────
+    - name: "Harden SSH configuration"
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line:  "{{ item.line }}"
+        state: present
+        backup: true
+      loop:
+        - { regexp: '^#?PermitRootLogin',          line: 'PermitRootLogin no' }
+        - { regexp: '^#?PasswordAuthentication',    line: 'PasswordAuthentication no' }
+        - { regexp: '^#?MaxAuthTries',              line: 'MaxAuthTries 3' }
+        - { regexp: '^#?LoginGraceTime',            line: 'LoginGraceTime 30' }
+        - { regexp: '^#?X11Forwarding',             line: 'X11Forwarding no' }
+        - { regexp: '^#?AllowAgentForwarding',      line: 'AllowAgentForwarding no' }
+        - { regexp: '^#?PermitEmptyPasswords',      line: 'PermitEmptyPasswords no' }
+        - { regexp: '^#?Protocol',                  line: 'Protocol 2' }
+        - { regexp: '^#?ClientAliveInterval',       line: 'ClientAliveInterval 300' }
+        - { regexp: '^#?ClientAliveCountMax',       line: 'ClientAliveCountMax 2' }
+      notify: Restart SSH
+
+    # ── FIREWALL (UFW) ────────────────────────────────────────────
+    - name: "Set UFW default deny inbound"
+      ufw:
+        direction: incoming
+        policy: deny
+
+    - name: "Set UFW default allow outbound"
+      ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: "Allow SSH through UFW"
+      ufw:
+        rule: allow
+        port: "{{ ssh_port }}"
+        proto: tcp
+
+    - name: "Allow HTTPS through UFW"
+      ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+
+    - name: "Allow Prometheus port on monitoring hosts"
+      ufw:
+        rule: allow
+        port: "9090"
+        proto: tcp
+      when: inventory_hostname in groups['monitoring']
+
+    - name: "Allow Grafana port on monitoring hosts"
+      ufw:
+        rule: allow
+        port: "3000"
+        proto: tcp
+      when: inventory_hostname in groups['monitoring']
+
+    - name: "Enable UFW"
+      ufw:
+        state: enabled
+
+    # ── FAIL2BAN ─────────────────────────────────────────────────
+    - name: "Configure fail2ban jail for SSH"
+      copy:
+        dest: /etc/fail2ban/jail.local
+        content: |
+          [DEFAULT]
+          bantime  = 3600
+          findtime = 600
+          maxretry = 3
+
+          [sshd]
+          enabled  = true
+          port     = ssh
+          logpath  = %(sshd_log)s
+          backend  = %(sshd_backend)s
+          maxretry = 3
+      notify: Restart fail2ban
+
+    - name: "Enable and start fail2ban"
+      systemd:
+        name: fail2ban
+        enabled: true
+        state: started
+
+    # ── NTP ───────────────────────────────────────────────────────
+    - name: "Configure NTP servers"
+      lineinfile:
+        path: /etc/ntp.conf
+        regexp: "^server "
+        line: "server {{ item }} iburst"
+        state: present
+      loop: "{{ ntp_servers }}"
+      notify: Restart NTP
+
+    - name: "Enable and start NTP"
+      systemd:
+        name: ntp
+        enabled: true
+        state: started
+
+    # ── UNATTENDED UPGRADES ───────────────────────────────────────
+    - name: "Enable automatic security updates"
+      copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+          APT::Periodic::AutocleanInterval "7";
+
+    # ── VERIFICATION ──────────────────────────────────────────────
+    - name: "Verify UFW status"
+      command: ufw status verbose
+      register: ufw_status
+      changed_when: false
+
+    - name: "Print UFW status"
+      debug:
+        msg: "{{ ufw_status.stdout_lines }}"
+
+    - name: "Verify fail2ban status"
+      command: systemctl status fail2ban --no-pager
+      register: f2b_status
+      changed_when: false
+
+    - name: "Print fail2ban status"
+      debug:
+        msg: "{{ f2b_status.stdout_lines }}"
+
+  handlers:
+    - name: Restart SSH
+      systemd:
+        name: ssh
+        state: restarted
+
+    - name: Restart fail2ban
+      systemd:
+        name: fail2ban
+        state: restarted
+
+    - name: Restart NTP
+      systemd:
+        name: ntp
+        state: restarted
