@@ -1,0 +1,12 @@
+# -----------------------------------------------------------------
+# Harrington Capital plc -- Example tfvars
+# Copy this file to terraform.tfvars and fill in your values.
+# DO NOT commit terraform.tfvars -- it contains secrets.
+# -----------------------------------------------------------------
+
+location            = "uksouth"
+environment         = "prod"
+project             = "harrington"
+admin_username      = "hcadmin"
+admin_password      = "REPLACE_WITH_SECURE_PASSWORD_MIN_12_CHARS"
+ssh_public_key_path = "~/.ssh/id_rsa.pub"
