@@ -1,0 +1,94 @@
+# -----------------------------------------------------------------
+# Harrington Capital plc -- Docker Compose
+# Phase 4: Multi-Container Application Deployment
+# -----------------------------------------------------------------
+# BUILD  : Run 'docker compose up -d' in this directory.
+# VERIFY : Run 'docker ps' -- all 3 containers must show 'Up'.
+#          Open http://localhost:8080 in your browser.
+# SUBMIT : Paste 'docker ps' output and browser screenshot into Phase 4 submission.
+# -----------------------------------------------------------------
+
+services:
+
+  # ── NGINX REVERSE PROXY ─────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: hc-nginx
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+    depends_on:
+      - app
+    networks:
+      - hc-frontend
+    restart: unless-stopped
+    labels:
+      com.harrington.service: "reverse-proxy"
+      com.harrington.phase: "phase-4"
+
+  # ── APPLICATION SERVER ───────────────────────────────────────────
+  app:
+    image: python:3.12-alpine
+    container_name: hc-app
+    working_dir: /app
+    volumes:
+      - ./app:/app:ro
+    command: >
+      sh -c "pip install flask --quiet &&
+             python app.py"
+    environment:
+      - FLASK_ENV=production
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=harrington_ops
+      - DB_USER=hcapp
+      - DB_PASSWORD=HC@AppDB2026!
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - hc-frontend
+      - hc-backend
+    restart: unless-stopped
+    labels:
+      com.harrington.service: "application"
+      com.harrington.phase: "phase-4"
+
+  # ── POSTGRES DATABASE ────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: hc-db
+    environment:
+      - POSTGRES_DB=harrington_ops
+      - POSTGRES_USER=hcapp
+      - POSTGRES_PASSWORD=HC@AppDB2026!
+    volumes:
+      - hc-db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - hc-backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hcapp -d harrington_ops"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      com.harrington.service: "database"
+      com.harrington.phase: "phase-4"
+
+volumes:
+  hc-db-data:
+    name: hc-db-data
+
+networks:
+  hc-frontend:
+    name: hc-frontend
+    driver: bridge
+  hc-backend:
+    name: hc-backend
+    driver: bridge
+    internal: true
