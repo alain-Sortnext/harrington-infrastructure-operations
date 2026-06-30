@@ -1,0 +1,307 @@
+{
+  "schema_version": "1.0",
+  "simulation_title": "Harrington Capital \u2014 Infrastructure Engineer",
+  "domain": "Enterprise Infrastructure Operations / Hybrid Cloud",
+  "role": "Infrastructure Engineer (Mid-Level)",
+  "overview": "Candidates inherit an undocumented Azure and on-premises estate at a UK financial services firm after the previous engineer left with no handover. Across 10 phases they codify the Azure estate with Terraform, build Active Directory, harden Linux with Ansible, deploy Docker, configure Prometheus/Grafana monitoring, work a P1 incident to root cause, automate operations with PowerShell, complete a DORA-compliant DR test, and produce a portfolio-ready GitHub repository.",
+  "setup": {
+    "required_accounts": [
+      "GitHub (free)",
+      "Microsoft Azure Free Tier",
+      "AWS Free Tier",
+      "GLPI or Jira Service Management Free (ITSM)"
+    ],
+    "required_software": [
+      "VirtualBox",
+      "Windows Server 2022 Evaluation (180-day free)",
+      "Ubuntu Server 22.04 LTS",
+      "Docker Desktop",
+      "Terraform CLI (v1.6+)",
+      "Ansible",
+      "PowerShell 7",
+      "Visual Studio Code",
+      "Prometheus + Grafana",
+      "Azure CLI",
+      "AWS CLI"
+    ],
+    "repository": {
+      "name": "harrington-infrastructure-operations",
+      "url": "https://github.com/alain-Sortnext/harrington-infrastructure-operations",
+      "folders": [
+        "/terraform",
+        "/powershell",
+        "/ansible",
+        "/docker",
+        "/monitoring",
+        "/runbooks",
+        "/incident-reports",
+        "/architecture",
+        "/screenshots",
+        "/evidence",
+        "/docs"
+      ],
+      "note": "Candidate forks or clones this repo. All starter code (Terraform, PowerShell, Ansible, Docker) and all phase guide PDFs are already committed to it under /docs/candidate-files/."
+    },
+    "estate_naming_standard": {
+      "azure_vms": "vm-harrington-[env]-[role] e.g. vm-harrington-prod-dc01",
+      "onprem_servers": "HC-[ROLE][NN] e.g. HC-DC01, HC-APP01, HC-MON01",
+      "incidents": "INC-YYYYMMDD-NNN",
+      "changes": "CHG-YYYYMMDD-NNN",
+      "runbooks": "RB-[FUNCTION]-[VERSION]"
+    },
+    "locked_answer_key_figures": {
+      "domain_name": "harrington.local",
+      "total_ad_users": 10,
+      "user_breakdown": "Technology 4, Finance 2, Investments 1, Risk and Compliance 2, Operations 1",
+      "dc01_private_ip": "10.0.3.10",
+      "vnet_cidr": "10.0.0.0/16",
+      "resource_group_prod": "rg-harrington-prod",
+      "terraform_resource_count": "18 or 19 (accept either)",
+      "docker_containers": "hc-nginx, hc-app, hc-db",
+      "incident_id": "INC-20260602-001",
+      "disk_before_incident": ">= 90% (scenario states 97%)",
+      "disk_after_fix": "< 82%",
+      "incident_root_cause": "Docker container log accumulation in /var/lib/docker/containers/ \u2014 NOT /var/log (this is the planted wrong-direction trap)",
+      "dora_articles": "Article 11 (ICT Business Continuity), Article 17 (Incident Management), Article 26 (Resilience Testing)",
+      "user_provisioning_test_result": "Created: 3 / Failed: 0",
+      "disk_alert_threshold": "75%"
+    }
+  },
+  "phases": [
+    {
+      "phase_id": "phase_1",
+      "phase_title": "Phase 0 \u2014 Environment Setup and Validation",
+      "what_good_looks_like": "A candidate who has genuinely set up all 12 tools, not just claimed to. Evidence should show: a real GitHub repository URL with a 40-character commit SHA; an Azure Resource Group screenshot showing 'rg-harrington-prod' with the subscription ID visible; AWS CLI output from 'aws sts get-caller-identity' showing a real 12-digit account number; a Windows Server 2022 VM screenshot with hostname 'HC-DC01' visible; an Ubuntu SSH session screenshot showing 'HC-APP01'; the literal text 'Hello from Docker!' from docker run hello-world; a Terraform version string starting with 'v1.'; PowerShell $PSVersionTable showing version 7.x; a VS Code screenshot with at least 3 relevant extensions visible; Prometheus targets page and Grafana login page screenshots; and a real ITSM ticket number. All 13 items must be present \u2014 this phase has no partial credit philosophy because every later phase depends on these tools working.",
+      "common_mistakes": [
+        "Describing tools conceptually instead of actually installing them and capturing real output",
+        "Submitting a generic Azure screenshot without the resource group name 'rg-harrington-prod' visible",
+        "Skipping the AWS account entirely since it isn't used again until later \u2014 it is still required evidence here",
+        "Forgetting to actually create the GitHub repository folder structure before claiming the repo is ready",
+        "Submitting a Docker Desktop installation screenshot instead of the 'docker run hello-world' console output",
+        "Not noting the GLPI/Jira ticket number \u2014 this is the anti-fake marker for this item"
+      ],
+      "answer": "Model Phase 0 submission (13 items):\n\n1. GitHub repo URL: https://github.com/[candidate]/harrington-infrastructure-operations\n2. First commit SHA: a 40-character hex string e.g. b86f7c25405e212b6673c8cbb6658ba87a86f628\n3. Azure RG screenshot: Resource Groups > rg-harrington-prod showing empty RG (resources come in Phase 1) with subscription ID visible in the portal header\n4. AWS identity: { \"UserId\": \"AIDA...\", \"Account\": \"123456789012\", \"Arn\": \"arn:aws:iam::123456789012:user/candidate\" }\n5. HC-DC01 screenshot: Windows Server 2022 desktop with $env:COMPUTERNAME showing HC-DC01\n6. HC-APP01 SSH screenshot: terminal showing hcadmin@HC-APP01:~$ prompt\n7. Docker output: 'Hello from Docker! This message shows that your installation appears to be working correctly.'\n8. Terraform version: 'Terraform v1.6.6' or higher\n9. PowerShell: PSVersion 7.4.x in the $PSVersionTable output\n10. VS Code screenshot: Extensions panel showing Terraform, PowerShell, Docker extensions installed, repo folder open\n11. Prometheus screenshot: /targets page (may be empty at this stage \u2014 that's expected, exporters come later)\n12. Grafana screenshot: login page at port 3000\n13. ITSM ticket: a real ticket number e.g. 'Ticket #1' or 'TEST-001' from GLPI or Jira Service Management",
+      "phase_setup": {
+        "tools_needed": [
+          "GitHub",
+          "Azure CLI",
+          "AWS CLI",
+          "VirtualBox",
+          "Windows Server 2022 ISO",
+          "Ubuntu Server 22.04 ISO",
+          "Docker Desktop",
+          "Terraform",
+          "PowerShell 7",
+          "VS Code",
+          "Prometheus",
+          "Grafana",
+          "GLPI or Jira Service Management"
+        ],
+        "estimated_time": "2-3 hours (mostly download and install time)",
+        "blocking_dependency": "None \u2014 this is the first phase",
+        "tutor_note": "If a candidate is stuck on VirtualBox VM creation, the most common issue is virtualization not enabled in BIOS. Check Task Manager > Performance > CPU > Virtualization: Enabled on Windows, or 'sysctl kern.hv_support' on Mac."
+      }
+    },
+    {
+      "phase_id": "phase_2",
+      "phase_title": "Phase 1 \u2014 Azure Infrastructure with Terraform",
+      "what_good_looks_like": "A clean terraform apply with 18-19 resources, the completed TODO NSG rule for RDP (allow-rdp-mgmt-inbound, port 3389, source restricted to 10.0.3.0/24), a terraform output showing DC01's locked private IP of 10.0.3.10, an Azure Portal screenshot proving the resources actually exist, a network topology diagram built in Draw.io and committed to /architecture, and \u2014 critically \u2014 the candidate flags the three unidentified VMs (10.0.3.41-43) rather than blindly including them in the Terraform or ignoring them entirely.",
+      "common_mistakes": [
+        "Forgetting to complete the TODO NSG rule and submitting with only the SSH rule present",
+        "Including the three mystery VMs in Terraform without investigating or flagging them \u2014 this is a deliberate test of judgement",
+        "Submitting a private IP for DC01 that doesn't match 10.0.3.10 \u2014 this means they edited the locked Terraform values incorrectly",
+        "Using an open source_address_prefix (e.g. '*' or 'Internet') for the RDP rule instead of restricting to 10.0.3.0/24",
+        "Not running terraform plan before apply, so they cannot show the 'X to add' summary line",
+        "Forgetting to commit the completed main.tf to GitHub \u2014 only running it locally without version control"
+      ],
+      "answer": "Model Phase 1 submission:\n\nPLAN_SUMMARY: Plan: 19 to add, 0 to change, 0 to destroy.\nAPPLY_SUMMARY: Apply complete! Resources: 19 added, 0 changed, 0 destroyed.\nRG_PROD_ID: /subscriptions/[guid]/resourceGroups/rg-harrington-prod\nDC01_PUBLIC_IP: [any real Azure public IP e.g. 20.90.x.x]\nDC01_PRIVATE_IP: 10.0.3.10\nNSG_RULE_NAME: allow-rdp-mgmt-inbound\n\nThe completed TODO rule added to azurerm_network_security_group.mgmt:\nsecurity_rule {\n  name = \"allow-rdp-mgmt-inbound\"\n  priority = 100\n  direction = \"Inbound\"\n  access = \"Allow\"\n  protocol = \"Tcp\"\n  destination_port_range = \"3389\"\n  source_address_prefix = \"10.0.3.0/24\"\n  destination_address_prefix = \"*\"\n}\n\nUNIDENTIFIED_VMS: Three VMs found at 10.0.3.41-43, not in any documentation, excluded from Terraform pending investigation. Recommend confirming with James Okafor whether these are Callum's abandoned December PoC VMs, and raising a CHG ticket to decommission if confirmed unused.\n\nSubnet rationale (architecture reflection): snet-app (10.0.1.0/24) for application VMs with internet SSH blocked; snet-data (10.0.2.0/24) reserved for future database tier; snet-mgmt (10.0.3.0/24) for management infrastructure (DC, monitoring) with RDP/SSH restricted to the management subnet source only \u2014 preventing lateral movement from the app tier into management.",
+      "phase_setup": {
+        "tools_needed": [
+          "Terraform",
+          "Azure CLI",
+          "Draw.io"
+        ],
+        "estimated_time": "1.5-2 hours",
+        "blocking_dependency": "phase_1 (Phase 0 quiz must be passed)",
+        "tutor_note": "If terraform apply fails with quota errors, the candidate's free Azure subscription may have vCPU limits. Have them reduce vm_size_windows and vm_size_linux to Standard_B1s in terraform.tfvars. If SSH key errors occur, confirm they ran ssh-keygen before apply \u2014 the public key path defaults to ~/.ssh/id_rsa.pub."
+      }
+    },
+    {
+      "phase_id": "phase_3",
+      "phase_title": "Phase 2 \u2014 Active Directory and Windows Server",
+      "what_good_looks_like": "A working harrington.local domain with the full OU structure, exactly 10 users distributed correctly across 5 departments, all four AD services (ADWS, DNS, KDC, Netlogon) confirmed Running, DNS resolving correctly, and \u2014 the key differentiator \u2014 the svc_backup privileged account properly remediated: removed from Domain Admins, password expiry set, and documented in a GLPI ticket referencing ISO 27001 A.9.2.3.",
+      "common_mistakes": [
+        "Reporting a user count that isn't exactly 10 \u2014 this means the script encountered an error candidates didn't notice",
+        "Skipping the svc_backup remediation entirely, or describing it without showing the actual PowerShell commands run",
+        "Not raising a GLPI ticket for the svc_backup fix \u2014 Marcus's message explicitly requires this, and omitting it shows the candidate didn't read the compliance message carefully",
+        "Confusing OU structure with security groups \u2014 these are different AD objects and candidates sometimes conflate them",
+        "Reporting DNS as working without actually running Resolve-DnsName and pasting real output"
+      ],
+      "answer": "Model Phase 2 submission:\n\nDomain info: Name: harrington | DomainMode: Windows2016Domain | PDCEmulator: HC-DC01.harrington.local\n\nUser count summary:\nTotal users: 10\nTechnology: 4 (James Okafor, Priya Sharma, Sophie Cartwright, David Kowalski)\nFinance: 2 (Alice Thornton, Finn Oduya)\nInvestments: 1 (Ben Hargreaves)\nRisk and Compliance: 2 (Marcus Webb, Emma Fairfax)\nOperations: 1 (Chloe Mwangi)\n\nAD services: ADWS Running | DNS Running | KDC Running | Netlogon Running\n\nDNS verification: Resolve-DnsName harrington.local returns 10.0.3.10\n\nsvc_backup remediation:\nGLPI ticket: INC-20260603-002 (or raised as CHG-20260603-001)\nActions taken:\n1. Confirmed via Get-ADUser svc_backup -Properties PasswordNeverExpires,MemberOf that it was a member of Domain Admins with PasswordNeverExpires = True\n2. Removed from Domain Admins: Remove-ADGroupMember 'Domain Admins' -Members svc_backup\n3. Set password expiry: Set-ADUser svc_backup -PasswordNeverExpires $false\n4. Verified the fix and documented in GLPI referencing ISO 27001 A.9.2.3 (Management of privileged access rights)",
+      "phase_setup": {
+        "tools_needed": [
+          "Windows Server 2022 (HC-DC01)",
+          "PowerShell 7",
+          "Draw.io"
+        ],
+        "estimated_time": "2-2.5 hours including the DC promotion restart",
+        "blocking_dependency": "phase_2 (Terraform must be submitted)",
+        "tutor_note": "The 01-ad-setup.ps1 script restarts the server automatically after AD DS promotion. Candidates sometimes think the script failed because the connection drops \u2014 this is expected. They should reconnect after 3-5 minutes and run 02-ad-ou-users.ps1 next. If user creation fails with 'OU does not exist', the OU creation loop in the script may have errored \u2014 check for typos in the script if they modified it."
+      }
+    },
+    {
+      "phase_id": "phase_4",
+      "phase_title": "Phase 3 \u2014 Linux Hardening with Ansible",
+      "what_good_looks_like": "An Ansible PLAY RECAP showing failed=0 for both HC-APP01 and HC-MON01, with a changed count greater than zero \u2014 proving the playbook actually found and fixed unhardened settings rather than the hosts already being compliant. PasswordAuthentication confirmed 'no', UFW confirmed 'active' with the correct rules, and fail2ban confirmed 'active (running)'. The candidate explicitly does NOT take Callum's word that hardening was already done \u2014 they verify independently.",
+      "common_mistakes": [
+        "Assuming Priya's note that 'Callum said it was hardened' means no work is needed \u2014 this is the wrong-direction trap planted in the simulation",
+        "Reporting changed=0 as a pass without questioning why \u2014 if changed=0 on the very first run against an unmodified VM, that should raise suspicion, not be accepted at face value",
+        "Submitting Ansible output with failed > 0 and not investigating the specific failed task",
+        "Forgetting to test connectivity first with ansible -m ping before running the full playbook",
+        "Capturing only one host's PLAY RECAP line when both HC-APP01 and HC-MON01 are required"
+      ],
+      "answer": "Model Phase 3 submission:\n\nPLAY RECAP:\nHC-APP01 : ok=18  changed=12  unreachable=0  failed=0  skipped=0\nHC-MON01 : ok=18  changed=12  unreachable=0  failed=0  skipped=0\n\nVerification on HC-APP01:\n$ sudo grep PasswordAuthentication /etc/ssh/sshd_config\nPasswordAuthentication no\n\n$ sudo ufw status verbose\nStatus: active\nTo        Action  From\n22/tcp    ALLOW   Anywhere\n443/tcp   ALLOW   Anywhere\n\n$ sudo systemctl status fail2ban --no-pager\nActive: active (running) since Mon 2026-06-09 14:23:11 UTC\n\nThe changed=12 count on first run is the key evidence: it proves Callum's claim that SSH was hardened was false. If hardening had genuinely already been complete, the playbook would show changed=0 (Ansible's idempotency) \u2014 instead it found and fixed 12 settings that were not yet compliant.",
+      "phase_setup": {
+        "tools_needed": [
+          "Ansible",
+          "SSH key pair"
+        ],
+        "estimated_time": "1-1.5 hours",
+        "blocking_dependency": "phase_3 (Active Directory must be submitted)",
+        "tutor_note": "If candidates get UNREACHABLE errors, the most common cause is SSH key-based auth not set up yet \u2014 they need ssh-copy-id hcadmin@<HOST-IP> before Ansible can connect. If they get locked out of SSH entirely after the playbook runs, they need to use the VirtualBox console directly (not SSH) to fix UFW rules."
+      }
+    },
+    {
+      "phase_id": "phase_5",
+      "phase_title": "Phase 4 \u2014 Docker Multi-Container Deployment (CERTIFICATION GATE \u2014 75%)",
+      "what_good_looks_like": "All three containers (hc-nginx, hc-app, hc-db) showing 'Up' status in docker ps, the /health endpoint returning {\"status\": \"healthy\"}, and critically the /db-check endpoint returning {\"database\": \"connected\", \"log_entries\": 3} \u2014 the log_entries: 3 value is the anti-fake marker proving init.sql actually ran against a real PostgreSQL instance, not a mocked response. This is the certification gate phase at 75% \u2014 it should be held to a higher bar than other phases.",
+      "common_mistakes": [
+        "Submitting evidence while hc-db is still in its 30-60 second PostgreSQL health check window, showing 'starting' instead of 'healthy'",
+        "Not noticing hc-app is in a restart loop due to a missing psycopg2 dependency",
+        "Submitting a docker ps output with fewer than 3 containers and not investigating why",
+        "Reporting /db-check success without the log_entries value \u2014 this is the specific anti-fake marker the grading checks for",
+        "Browser screenshot showing a connection refused error because UFW is blocking port 8080"
+      ],
+      "answer": "Model Phase 4 submission:\n\ndocker ps:\nCONTAINER ID   IMAGE              STATUS                    PORTS\nabc123def456   nginx:1.25-alpine  Up 8 minutes              0.0.0.0:8080->80/tcp\n789xyz012abc   python:3.12-alpine Up 8 minutes\ndef456abc123   postgres:16-alpine Up 8 minutes (healthy)\n\ncurl -s http://localhost:8080/health:\n{\"environment\": \"production\", \"service\": \"hc-app\", \"status\": \"healthy\", \"version\": \"1.0.0\"}\n\ncurl -s http://localhost:8080/db-check:\n{\"database\": \"connected\", \"host\": \"db\", \"log_entries\": 3, \"status\": \"ok\"}\n\ndocker network ls:\nhc-frontend  bridge\nhc-backend   bridge\n\nBrowser screenshot: http://192.168.56.20:8080 showing 'Harrington Capital plc \u2014 Infrastructure Operations Portal' with 'Status: Running' in green text.",
+      "phase_setup": {
+        "tools_needed": [
+          "Docker Desktop",
+          "Docker Compose"
+        ],
+        "estimated_time": "1-1.5 hours",
+        "blocking_dependency": "phase_4 (Linux hardening must be submitted)",
+        "tutor_note": "This is the certification gate \u2014 pass threshold is 75%, higher than other phases. If hc-db shows unhealthy after 2+ minutes, check docker logs hc-db --tail=20 for a real error. If hc-app keeps restarting, the candidate likely needs to rebuild: docker compose build app to ensure psycopg2 installs correctly inside the container."
+      }
+    },
+    {
+      "phase_id": "phase_6",
+      "phase_title": "Phase 5 \u2014 Monitoring with Prometheus and Grafana",
+      "what_good_looks_like": "All Prometheus scrape targets showing State: UP \u2014 including windows-dc01, which requires the candidate to have caught Priya's specific hint about the Windows Exporter service being set to Manual start rather than Automatic. A five-panel Grafana dashboard named exactly 'Harrington Capital \u2014 Infrastructure Overview' with live (non-zero) metric values, and a disk alert rule configured at exactly 75% threshold.",
+      "common_mistakes": [
+        "Missing Priya's second message entirely, leaving windows-dc01 perpetually DOWN because the Windows Exporter service was never started",
+        "Setting the disk alert threshold to a round number like 80% instead of the specified 75%",
+        "Renaming the Grafana dashboard or leaving it as the default 'New Dashboard' title instead of 'Harrington Capital \u2014 Infrastructure Overview'",
+        "Importing the dashboard JSON but never connecting it to a working Prometheus data source, so all panels show 'No data'",
+        "Confusing node_exporter's port (9100) with Prometheus's own port (9090) when writing scrape configs"
+      ],
+      "answer": "Model Phase 5 submission:\n\nTARGETS_UP_COUNT: 4\nTARGETS_DOWN_COUNT: 0\nJobs UP: prometheus (localhost:9090), linux-app01 (HC-APP01:9100), linux-mon01 (localhost:9100), windows-dc01 (HC-DC01:9182)\n\nWINDOWS_EXPORTER_FIX: The windows_exporter service on HC-DC01 was configured with StartType=Manual rather than Automatic \u2014 it was installed but not running. Fixed with:\nsc config windows_exporter start=auto\nsc start windows_exporter\nVerified with curl http://HC-DC01-IP:9182/metrics returning metrics output. Prometheus target windows-dc01 now shows State: UP.\n\nGRAFANA_DASHBOARD_NAME: Harrington Capital \u2014 Infrastructure Overview\nPANEL_COUNT: 5\nDISK_ALERT_THRESHOLD: 75\n\nAlert rule: HC Disk Usage Warning\nPromQL: 100 - ((node_filesystem_avail_bytes{mountpoint='/'} / node_filesystem_size_bytes{mountpoint='/'}) * 100) > 75\nEvaluate every 1m for 5m, condition IS ABOVE 75",
+      "phase_setup": {
+        "tools_needed": [
+          "Prometheus",
+          "Grafana",
+          "node_exporter",
+          "Windows Exporter"
+        ],
+        "estimated_time": "1.5-2 hours",
+        "blocking_dependency": "phase_5 (Docker certification gate must be passed at 75%)",
+        "tutor_note": "This phase tests attentiveness \u2014 Priya's hint about the Windows Exporter service is easy to miss if the candidate skims inbox messages. If a candidate is stuck with windows-dc01 DOWN, prompt them to re-read Priya's second message rather than giving the answer directly."
+      }
+    },
+    {
+      "phase_id": "phase_7",
+      "phase_title": "Phase 6 \u2014 Incident Response and ITSM",
+      "what_good_looks_like": "The single most important quality marker in this phase is whether the candidate identifies the REAL root cause \u2014 Docker container log accumulation found via docker system df \u2014 rather than stopping at the surface symptom of /var/log being large. A real GLPI ticket number, disk usage shown at >=90% before the fix and <82% after, the application confirmed healthy post-fix, and a complete RCA document committed to GitHub with a linked change request for the permanent fix.",
+      "common_mistakes": [
+        "Identifying /var/log as the root cause \u2014 this is the deliberately planted wrong-direction trap; candidates who only run du -sh /var/log/* will reach this incorrect conclusion",
+        "Never running docker system df at all, missing the actual culprit (container logs in /var/lib/docker/containers/) entirely",
+        "Treating the symptom with docker system prune but writing an RCA that doesn't explain WHY the disk filled \u2014 i.e. no log rotation policy on the Docker daemon",
+        "Skipping the GLPI ticket and going straight to a Word document \u2014 the anti-fake marker (ticket number) is then missing",
+        "Forgetting to raise the change request for the permanent fix, leaving the incident 'resolved' but the underlying risk unaddressed"
+      ],
+      "answer": "Model Phase 6 submission:\n\nGLPI ticket: INC-20260602-001 (system ticket #4)\n\nDisk before fix:\nFilesystem      Size  Used Avail Use%\n/dev/sda1        60G   58G  1.2G  97%\n\nRoot cause: Docker container logs in /var/lib/docker/containers/[container-id]/*.log had no size limit configured \u2014 the hc-app and hc-nginx containers accumulated approximately 8.2 GB of unrotated log data over six weeks, filling /dev/sda1 to 97%. Confirmed via docker system df showing 8.2 GB as reclaimable. NOT a /var/log issue \u2014 that was a misleading surface symptom.\n\nFix applied: docker system prune -f (freed 8.2 GB)\n\nDisk after fix:\nFilesystem      Size  Used Avail Use%\n/dev/sda1        60G   50G  8.8G  83%\n\nApplication restored: curl /health returns {\"status\": \"healthy\"}\n\nRCA committed: github.com/[candidate]/harrington-infrastructure-operations/blob/main/incident-reports/INC-20260602-001-RCA.md\n\nChange request: CHG-20260609-001 \u2014 implement Docker daemon.json log rotation policy (max-size: 50m, max-file: 3) and confirm the 75% Grafana disk alert from Phase 5 is active to prevent recurrence.",
+      "phase_setup": {
+        "tools_needed": [
+          "GLPI or Jira Service Management",
+          "Docker"
+        ],
+        "estimated_time": "2-2.5 hours including RCA writing",
+        "blocking_dependency": "phase_6 (Monitoring must be submitted)",
+        "tutor_note": "This is the key wrong-direction trap phase. If a candidate's submission only mentions /var/log without any reference to Docker or docker system df, this is a strong signal their analysis stopped at the surface symptom. Prompt them with: 'What does docker system df show?' rather than telling them the answer."
+      }
+    },
+    {
+      "phase_id": "phase_8",
+      "phase_title": "Phase 7 \u2014 Automation Suite and Runbooks",
+      "what_good_looks_like": "Real console output from all three automation scripts run against the actual built environment \u2014 not described, but actually executed. The disk health check showing at least one server checked, the user provisioning script showing exactly 'Created: 3 / Failed: 0' (this only works if Phase 2's Active Directory was built correctly), and the Ansible patch baseline showing failed=0 across both Linux hosts. Both runbooks updated with dated test records proving they were actually followed.",
+      "common_mistakes": [
+        "CSV department values that don't exactly match the hash table keys in the script (e.g. 'IT' instead of 'Technology'), causing Failed > 0",
+        "Reporting Created: 3 / Failed: 0 without having actually run the script \u2014 this is checkable because the values trace back to a real AD instance from Phase 2",
+        "Forgetting to clean up the 3 test users created during provisioning testing, leaving test accounts in the production-style AD",
+        "Submitting the disk health check from before the environment was fully built, showing irrelevant or empty results",
+        "Skipping the runbook test record updates entirely, treating the runbooks as static reference documents rather than something to validate"
+      ],
+      "answer": "Model Phase 7 submission:\n\nDisk Health Check (run on HC-DC01):\nDISK HEALTH SUMMARY:\nServer    Drive  UsedPct  Status\nlocalhost C:     35.3%    OK\nHC-DC01   C:     35.3%    OK\nServers checked: 2 | Critical alerts: 0 | Log: C:\\HC-Logs\\disk-check-20260609-1423.log\n\nUser Provisioning (CSV with 3 test users, Departments: Technology, Finance, Operations):\nPROVISIONING SUMMARY:\nCreated : 3\nFailed  : 0\ntest.user1@harrington.local | Technology | Created\ntest.user2@harrington.local | Finance    | Created\ntest.user3@harrington.local | Operations | Created\n\n(Test users cleaned up after verification with Remove-ADUser)\n\nAnsible Patch Baseline:\nPLAY RECAP:\nHC-APP01 : ok=8  changed=3  unreachable=0  failed=0\nHC-MON01 : ok=8  changed=2  unreachable=0  failed=0\n\nGitHub commit: updated RB-USER-PROVISIONING-v1.md and RB-INCIDENT-RESPONSE-v1.md with test records dated 2026-06-09, result PASS.",
+      "phase_setup": {
+        "tools_needed": [
+          "PowerShell 7",
+          "Ansible"
+        ],
+        "estimated_time": "1.5 hours",
+        "blocking_dependency": "phase_7 (Incident response RCA must be filed)",
+        "tutor_note": "The Created: 3 / Failed: 0 result is the strongest anti-fake marker in this phase \u2014 it can only be produced by running the script against a genuinely built Active Directory. If a candidate cannot get past Failed: 1+, check their CSV Department column character-for-character against: Technology, Finance, Investments, Risk and Compliance, Operations."
+      }
+    },
+    {
+      "phase_id": "phase_9",
+      "phase_title": "Phase 8 \u2014 Disaster Recovery Test and Executive Report",
+      "what_good_looks_like": "A real, timestamped backup file with today's date in the filename, an actual measured RTO (not an estimate \u2014 the candidate must record the exact time of failure simulation and exact time of restoration), the application confirmed healthy after restore, and a one-page executive report that explicitly names both DORA Article 11 and Article 26, written in plain non-technical language appropriate for a CTO with four minutes to read it.",
+      "common_mistakes": [
+        "Stating an estimated RTO like '5 minutes' without having actually timed the failure-to-restore window",
+        "Backup filename missing today's date, suggesting it was created earlier or fabricated",
+        "Writing an exec report that exceeds 400 words or includes tool names and jargon Sophie explicitly said she doesn't want",
+        "Mentioning DORA generically without naming the specific articles (11 and 26) that the DR test evidences",
+        "Forgetting to include the Risk Status (RAG) section or Outstanding Actions table \u2014 both are explicitly required sections"
+      ],
+      "answer": "Model Phase 8 submission:\n\nPART A \u2014 DR Test Evidence:\nBackup filename: hc-db-20260609-1445.tar.gz\nBackup size: 142M\nFailure simulated at: 14:47:23\nService restored at: 14:52:11\nRTO achieved: 4 minutes 48 seconds\n\ncurl /health: {\"status\": \"healthy\"}\ncurl /db-check: {\"database\": \"connected\", \"log_entries\": 3}\n\nDR Runbook: github.com/[candidate]/harrington-infrastructure-operations/blob/main/runbooks/RB-DR-v1.md\n\nPART B \u2014 Executive Report (under 400 words):\n\nExecutive Summary: When this engineer joined, Harrington Capital's infrastructure had no IaC, incomplete monitoring, an outstanding DORA Article 17 RCA, and a DORA Article 26 DR test that was 14 months overdue. All four gaps are now remediated with evidence committed to GitHub. The infrastructure risk position has moved from Red to Amber.\n\nCompleted Remediation table: [Azure IaC | Manual only | Terraform committed | \u2014] [Monitoring | 11 hosts uncovered | All hosts monitored | Art. 17] [Incident process | No RCA filed | GLPI live, RCA filed | Art. 17] [DR test | 14 months overdue | Completed 9 June 2026, RTO 4m 48s | Art. 11 + Art. 26 \u2014 EVIDENCED]\n\nRisk Status: Red: none | Amber: Docker log rotation CHG pending CAB approval | Green: IaC, AD, monitoring, incident process, DR test\n\nOutstanding Actions: CHG-20260609-001 (Docker log rotation) \u2014 Owner: Infrastructure Engineer \u2014 Due: Week 11",
+      "phase_setup": {
+        "tools_needed": [
+          "Docker"
+        ],
+        "estimated_time": "1.5-2 hours",
+        "blocking_dependency": "phase_8 (Automation suite must be submitted)",
+        "tutor_note": "If a candidate's RTO seems suspiciously round (e.g. exactly '5 minutes'), ask them to show the two specific timestamps they recorded \u2014 the real failure start time and the real restoration time. A genuine measurement will have seconds in it, not a clean round number."
+      }
+    },
+    {
+      "phase_id": "phase_10",
+      "phase_title": "Phase 9 \u2014 Portfolio, GitHub Wiki and Interview Preparation",
+      "what_good_looks_like": "A genuinely polished portfolio repository \u2014 not just a final bulk commit, but a git log showing at least 15 commits spanning multiple working sessions, every one of the 10 repo folders containing real files (not just .gitkeep placeholders), a built GitHub Wiki, and three STAR answers that use the candidate's own specific figures from earlier phases rather than generic language. The three interview gate quiz questions test whether the candidate actually internalised the wrong-direction traps from earlier phases.",
+      "common_mistakes": [
+        "Writing generic STAR answers without citing INC-20260602-001, the DORA article numbers, or the specific script name \u2014 these are the deterministic checks and generic answers fail them",
+        "A single bulk commit at the end of the simulation instead of the natural commit history that should exist from working through 9 prior phases",
+        "Answering the interview gate Q1 with '/var/log' instead of the correct Docker root cause \u2014 this reveals the candidate never actually corrected their understanding from Phase 6",
+        "Skipping the GitHub Wiki entirely, treating it as optional when it's an explicit objective",
+        "STAR answers under the 150-word minimum, reading as bullet points rather than genuine interview-ready narratives"
+      ],
+      "answer": "Model interview gate answers:\n\nQ1 (root cause): Docker container logs in /var/lib/docker/containers/ had no size limit \u2014 identified with docker system df. (NOT /var/log)\n\nQ2 (DORA articles): DORA Article 11 (ICT Business Continuity) and Article 26 (Operational resilience testing)\n\nQ3 (Ansible changed): A changed > 0 count proves SSH hardening had NOT been completed before \u2014 Ansible found and fixed settings that were missing, directly disproving Callum's claim.\n\nModel STAR Q1 (excerpt): 'Situation: At Harrington Capital I triaged a P1 disk incident \u2014 HC-APP01 at 97% full, Finance impacted, application returning 500 errors. Task: identify root cause and restore service within the 4-hour P1 SLA. Action: I ran docker system df which showed 8.2 GB of reclaimable container build cache \u2014 the real root cause, not /var/log as the surface metrics suggested. I ran docker system prune -f which freed 8.2 GB. Result: Service was restored in under 90 minutes. I filed RCA INC-20260602-001 and raised CHG-20260609-001 for the permanent fix. A Grafana alert at 75% now prevents recurrence.'\n\nModel STAR Q3 (excerpt): 'At Harrington Capital, new user provisioning was manual in dsa.msc, taking ~45 minutes per batch. I built 04-user-provisioning.ps1 \u2014 reads a CSV, maps Department to OU via a hash table, logs every action. Tested with 3 users: Created: 3 / Failed: 0. Provisioning now takes under 2 minutes, with a runbook filed so any team member can use it.'",
+      "phase_setup": {
+        "tools_needed": [
+          "GitHub Wiki"
+        ],
+        "estimated_time": "2-2.5 hours",
+        "blocking_dependency": "phase_9 (DR test and exec report must be submitted)",
+        "tutor_note": "This phase is the best diagnostic of whether a candidate truly understood the simulation versus rushed through it. The interview gate Q1 in particular reveals whether the Docker root cause lesson from Phase 6 actually landed \u2014 if they answer '/var/log' here, route them back to review their Phase 6 submission."
+      }
+    }
+  ]
+}
